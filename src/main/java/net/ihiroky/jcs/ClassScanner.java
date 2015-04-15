@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -12,6 +13,7 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -147,7 +149,7 @@ public class ClassScanner {
      * @param <T> the type of the type parameter of the condition class
      * @return the scanned classes
      * @throws IOException if I/O error occurs
-     * @throws java.lang.IllegalStateException if unsupported kind of the classpath is used
+     * @throws IllegalStateException if unsupported kind of the classpath is used
      */
     public static <T> List<Class<?>> scan(Package root, Class<? extends T> conditionClass,
             Filter<T> filter, int maxCount, ClassLoader classLoader) throws IOException {
@@ -159,6 +161,17 @@ public class ClassScanner {
 
         String rootPath = root.getName().replaceAll("\\.", "/");
         URL rootUrl = classLoader.getResource(rootPath);
+        if (rootUrl == null) {
+            StringBuilder msg = new StringBuilder();
+            msg.append("No resource URL is found for package ").append(rootPath).append(" in ").append(classLoader);
+            if (classLoader instanceof URLClassLoader) {
+                URLClassLoader cl = (URLClassLoader) classLoader;
+                msg.append(": ").append(Arrays.toString(cl.getURLs()));
+            }
+            throw new IllegalStateException(msg.toString());
+
+        }
+
         String protocol = rootUrl.getProtocol();
 
         if (PROTOCOL_FILE.equals(protocol)) {
