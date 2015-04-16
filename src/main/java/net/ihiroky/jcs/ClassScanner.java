@@ -169,7 +169,6 @@ public class ClassScanner {
                 msg.append(": ").append(Arrays.toString(cl.getURLs()));
             }
             throw new IllegalStateException(msg.toString());
-
         }
 
         String protocol = rootUrl.getProtocol();
@@ -177,7 +176,7 @@ public class ClassScanner {
         if (PROTOCOL_FILE.equals(protocol)) {
             String file = rootUrl.getFile();
             String base = file.substring(0, file.length() - rootPath.length());
-            Path basePath = Paths.get(base);
+            Path basePath = Paths.get(base).normalize(); // Remove redundant directory separator.
             List<String> classNameList = new ArrayList<>();
             Files.walkFileTree(basePath, new ClassFileVisitor(classNameList, maxCount, base.length()));
             return scan(classNameList, conditionClass, filter, maxCount, classLoader);
